@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>attr</title>
+    <!-- 引入资源 -->
+    <script src="./js/jquery-3.2.1.min.js"></script>
+    <script src="./js/g2-3.2.7-beta.4.min.js"></script>
+    <script src="./js/data-set.min.js"></script>
+</head>
+<body>
+<!-- 创建图表容器 -->
+<div id="c1"></div>
+<script>
+    $.getJSON('./assets/data/bubble-population.json', function(data) {
+        const chart = new G2.Chart({
+            container: 'c1',
+            forceFit: true,
+            height: 400
+        });
+        chart.source(data, {
+            'LifeExpectancy': {
+                alias: '人均寿命（年）'
+            },
+            'Population': {
+                type: 'pow',
+                alias: '人口总数'
+            },
+            'GDP': {
+                alias: '人均国内生产总值($)',
+                tickCount: 10
+            },
+            'Country': {
+                alias: '国家/地区'
+            }
+        });
+        chart.axis('GDP', {
+            label: {
+                // 格式化坐标轴的显示
+                formatter: value => {
+                    return (value / 1000).toFixed(0) + 'k';
+                }
+            }
+        });
+        chart.tooltip({
+            showTitle: false // 不显示默认标题
+        });
+        chart.legend('Population', false);
+        chart.legend('Country', false);
+        chart.point().position('GDP*LifeExpectancy')
+            .size('Population', [ 5, 35 ])
+            .color('continent')
+            .opacity(0.65)
+            .shape('circle')
+            .tooltip('Country*Population*GDP*LifeExpectancy');
+        chart.render();
+    });
+</script>
+</body>
+</html>

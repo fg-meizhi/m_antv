@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>attr</title>
+    <!-- 引入资源 -->
+    <script src="./js/jquery-3.2.1.min.js"></script>
+    <script src="./js/g2-3.2.7-beta.4.min.js"></script>
+    <script src="./js/data-set.min.js"></script>
+</head>
+<body>
+<!-- 创建图表容器 -->
+<div id="c1"></div>
+<script>
+    $.getJSON('./assets/data/usa.geo.json', function(mapData) {
+        const chart = new G2.Chart({
+            container: 'c1',
+            width: 1800,
+            height: 900,
+            padding: [ 40, 140 ]
+        });
+        chart.legend(false);
+        chart.axis(false);
+        chart.tooltip({
+            showTitle: false
+        });
+        // 同步度量
+        chart.scale({
+            longitude: {
+                sync: true
+            },
+            latitude: {
+                sync: true
+            }
+        });
+        // 绘制地图背景
+        const ds = new DataSet();
+        const bgDataView = ds.createView('back')
+            .source(mapData, {
+                type: 'GeoJSON'
+            });
+        const bgView = chart.view();
+        bgView.source(bgDataView);
+        bgView.polygon().position('longitude*latitude')
+            .color('#e6e6e6')
+            .active(false)
+            .tooltip(false)
+            .style({
+                stroke: '#999',
+                lineWidth: 1
+            });
+
+        $.getJSON('./assets/data/2014-usa-population.json', function(data) {
+            // 绘制 choropleth map
+            const view = chart.view();
+            const userPolygonDv = ds.createView()
+                .source(data)
+                .transform({
+                    geoDataView: bgDataView,
+                    field: 'State',
+                    type: 'geo.region',
+                    as: [ 'longitude', 'latitude' ]
+                });
+            view.source(userPolygonDv);
+            view.polygon()
+                .position('longitude*latitude')
+                .color('Population','#e5f5e0-#31a354')
+                .tooltip('State*Population');
+
+            // 绘制文字
+            const textView = chart.view();
+            const centerDv = ds.createView()
+                .source(data)
+                .transform({
+                    geoDataView: bgDataView,
+                    field: 'State',
+                    type: 'geo.centroid',
+                    as: [ 'longitude', 'latitude' ]
+                });
+            textView.source(centerDv);
+            textView.point()
+                .position('longitude*latitude')
+                .size(0)
+                .label('code', {
+                    offset: 0,
+                    textStyle: {
+                        fontSize: 10
+                    }
+                });
+            chart.render();
+        });
+    });
+</script>
+</body>
+</html>
